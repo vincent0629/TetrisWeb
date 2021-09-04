@@ -9,3 +9,9 @@
 .block {
   display: inline-block;
 }
+
+.info {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
