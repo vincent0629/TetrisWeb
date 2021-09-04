@@ -1,0 +1,11 @@
+* {
+  box-sizing: border-box;
+}
+
+.App {
+  text-align: center;
+}
+
+.block {
+  display: inline-block;
+}
