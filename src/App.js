@@ -22,6 +22,7 @@ const BLOCK_POS = [
 let paused = false;
 let level = 1;
 let score = 0;
+let lines = 0;
 let state = NEW_BLOCK;
 let keys = [];
 let counter;
@@ -42,6 +43,8 @@ function App() {
   const [_level, setLevel] = useState(level);
   // eslint-disable-next-line
   const [_score, setScore] = useState(score);
+  // eslint-disable-next-line
+  const [_lines, setLines] = useState(0);
   // eslint-disable-next-line
   const [_nextblockModel, setNextBlockModel] = useState([]);
   // eslint-disable-next-line
@@ -152,6 +155,8 @@ function App() {
         if (!paused && --counter === 0) {
           counter = countdown;
           if (!moveBlock([0, 1])) {
+            score += 20;
+            setScore(score);
             state = NEW_BLOCK;
             const pos = BLOCK_POS[blockIndex][blockAngle];
             for (let i = 0; i < pos.length; ++i)
@@ -168,7 +173,7 @@ function App() {
           }
         }
         setBlockModel([blockModel]);
-        counter = 20;
+        counter = 10;
         state = DELETED_ROWS;
         break;
       case DELETED_ROWS:
@@ -182,8 +187,10 @@ function App() {
             else
               ++i;
           }
-          score += (BLOCK_ROW - rowSum.length) * 100;
+          score += ((BLOCK_ROW - rowSum.length) * 2 - 1) * 100;
           setScore(score);
+          lines += BLOCK_ROW - rowSum.length;
+          setLines(lines);
           for (let i = rowSum.length; i < BLOCK_ROW; ++i) {
             rowSum.unshift(0);
             const m = new Array(BLOCK_COLUMN);
@@ -192,7 +199,7 @@ function App() {
             blockModel.unshift(m);
           }
           setBlockModel([blockModel]);
-          state = score >= level * 500 ? NEXT_LEVEL : NEW_BLOCK;
+          state = score >= level * 2000 ? NEXT_LEVEL : NEW_BLOCK;
         }
         break;
       case NEXT_LEVEL:
@@ -236,6 +243,7 @@ function App() {
       <div className="info">
         <div className="level">Level {level}</div>
         <div className="score">Score {score}</div>
+        <div className="lines">Lines {lines}</div>
         <BlockView size={blockSize} model={nextBlockModel} />
       </div>
     </>
