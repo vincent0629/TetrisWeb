@@ -123,7 +123,7 @@ function App() {
       case NEW_BLOCK:
         blockIndex = nextBlockIndex !== undefined ? nextBlockIndex : Math.floor(Math.random() * BLOCK_POS.length);
         blockAngle = 0;
-        blockAnchor = [Math.floor(BLOCK_COLUMN / 2), 0];
+        blockAnchor = [Math.ceil(BLOCK_COLUMN / 2) - 1, 0];
         counter = countdown;
         state = overlap([0, 0]) ? GAME_OVER : PLAYING;
         putBlock(blockIndex);
