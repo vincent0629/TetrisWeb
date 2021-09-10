@@ -7,9 +7,7 @@ const BLOCK_ROW = 20;
 const NEW_BLOCK = 0;
 const PLAYING = 1;
 const DELETING_ROWS = 2;
-const DELETED_ROWS = 3;
-const NEXT_LEVEL = 4;
-const GAME_OVER = 5;
+const GAME_OVER = 3;
 const BLOCK_POS = [
   [[[0, 0], [-1, 0], [1, 0], [2, 0]], [[0, 0], [0, -1], [0, 1], [0, 2]]],
   [[[0, 0], [-1, 0], [1, 0], [1, 1]], [[0, 0], [0, -1], [1, -1], [0, 1]], [[0, 0], [-1, -1], [-1, 0], [1, 0]], [[0, 0], [0, -1], [0, 1], [-1, 1]]],
@@ -119,6 +117,17 @@ function App() {
   };
 
   const timeHandler = useCallback(() => {
+    let key;
+    if (keys.length > 0) {
+      key = keys.shift();
+      if (key === 'KeyP') {
+        paused = !paused;
+        setPaused(paused);
+      }
+    }
+    if (paused)
+      return;
+
     switch (state) {
       case NEW_BLOCK:
         blockIndex = nextBlockIndex !== undefined ? nextBlockIndex : Math.floor(Math.random() * BLOCK_POS.length);
@@ -136,48 +145,38 @@ function App() {
         setNextBlockModel([nextBlockModel]);
         break;
       case PLAYING:
-        if (keys.length > 0) {
-          const key = keys.shift();
-          if (key === 'KeyP') {
-            paused = !paused;
-            setPaused(paused);
-          } else if (!paused) {
-            if (key === 'ArrowLeft')
-              moveBlock([-1, 0]);
-            else if (key === 'ArrowRight')
-              moveBlock([1, 0]);
-            else if (key === 'ArrowDown')
-              moveBlock([0, 1]);
-            else if (key === 'Enter')
-              rotateBlock(1);
-          }
-        }
-        if (!paused && --counter === 0) {
+        if (key === 'ArrowLeft')
+          moveBlock([-1, 0]);
+        else if (key === 'ArrowRight')
+          moveBlock([1, 0]);
+        else if (key === 'ArrowDown')
+          moveBlock([0, 1]);
+        else if (key === 'Enter')
+          rotateBlock(1);
+        if (--counter === 0) {
           counter = countdown;
           if (!moveBlock([0, 1])) {
             score += 20;
             setScore(score);
             state = NEW_BLOCK;
             const pos = BLOCK_POS[blockIndex][blockAngle];
+            let deleting = false;
             for (let i = 0; i < pos.length; ++i)
-              if (++rowSum[blockAnchor[1] + pos[i][1]] === BLOCK_COLUMN)
-                state = DELETING_ROWS;
+              if (++rowSum[blockAnchor[1] + pos[i][1]] === BLOCK_COLUMN) {
+                deleting = true;
+                for (let j = 0; j < BLOCK_COLUMN; ++j)
+                  blockModel[i][j] = -1;
+              }
+            if (deleting) {
+              setBlockModel([blockModel]);
+              counter = 10;
+              state = DELETING_ROWS;
+            }
           }
         }
         break;
       case DELETING_ROWS:
-        for (let i = 0; i < BLOCK_ROW; ++i) {
-          if (rowSum[i] === BLOCK_COLUMN) {
-            for (let j = 0; j < BLOCK_COLUMN; ++j)
-              blockModel[i][j] = -1;
-          }
-        }
-        setBlockModel([blockModel]);
-        counter = 10;
-        state = DELETED_ROWS;
-        break;
-      case DELETED_ROWS:
-        if (!paused && --counter === 0) {
+        if (--counter === 0) {
           let i = 0;
           while (i < rowSum.length) {
             if (rowSum[i] === BLOCK_COLUMN) {
@@ -199,13 +198,12 @@ function App() {
             blockModel.unshift(m);
           }
           setBlockModel([blockModel]);
-          state = score >= level * 2000 ? NEXT_LEVEL : NEW_BLOCK;
+          if (score >= level * 2000) {
+            countdown = Math.ceil(countdown * 0.8);
+            setLevel(++level);
+          }
+          state = NEW_BLOCK;
         }
-        break;
-      case NEXT_LEVEL:
-        countdown = Math.ceil(countdown * 0.8);
-        setLevel(++level);
-        state = NEW_BLOCK;
         break;
       case GAME_OVER:
         break;
