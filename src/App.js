@@ -176,12 +176,14 @@ function App() {
             state = NEW_BLOCK;
             const pos = BLOCK_POS[blockIndex][blockAngle];
             let deleting = false;
-            for (let i = 0; i < pos.length; ++i)
-              if (++rowSum[blockAnchor[1] + pos[i][1]] === BLOCK_COLUMN) {
+            for (let i = 0; i < pos.length; ++i) {
+              const row = blockAnchor[1] + pos[i][1];
+              if (++rowSum[row] === BLOCK_COLUMN) {
                 deleting = true;
                 for (let j = 0; j < BLOCK_COLUMN; ++j)
-                  blockModel[i][j] = -1;
+                  blockModel[row][j] = -1;
               }
+            }
             if (deleting) {
               setBlockModel([blockModel]);
               counter = 10;
