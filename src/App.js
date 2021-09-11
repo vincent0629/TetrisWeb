@@ -56,17 +56,26 @@ function App() {
 
   const overlap = (diff) => {
     const pos = BLOCK_POS[blockIndex][blockAngle];
+    const ret = [0, 0];
     for (let i = 0; i < pos.length; ++i) {
       const x = blockAnchor[0] + pos[i][0] + diff[0];
       const y = blockAnchor[1] + pos[i][1] + diff[1];
-      if (x < 0 || x >= BLOCK_COLUMN)
-        return true;
-      if (y < 0 || y >= BLOCK_ROW)
-        return true;
-      if (blockModel[y][x] !== -1)
-        return true;
+      if (x >= 0 && x < BLOCK_COLUMN && y >= 0 && y < BLOCK_ROW && blockModel[y][x] !== -1)
+        return [0, 0];  // overlapped with dropped blocks.
+      if (x < 0)
+        ret[0] = Math.min(ret[0], x);
+      else if (x >= BLOCK_COLUMN)
+        ret[0] = Math.max(ret[0], x - BLOCK_COLUMN + 1);
+      if (y < 0)
+        ret[1] = Math.min(ret[1], y);
+      else if (y >= BLOCK_ROW)
+        ret[1] = Math.max(ret[1], y - BLOCK_ROW + 1);
     }
-    return false;
+    if (ret[0] === 0 && ret[1] === 0)
+      return undefined;  // not overlapped
+    if (ret[1] > 0)  // overlapped with bottom bound.
+      ret[1] = 0;
+    return ret;
   };
 
   const updateModel = (model, anchor, index, angle, value) => {
@@ -98,10 +107,16 @@ function App() {
       return false;
     putBlock(-1);
     blockAngle = (blockAngle + poses.length + diff) % poses.length;
-    if (overlap([0, 0])) {
-      blockAngle = (blockAngle + poses.length - diff) % poses.length;
-      putBlock(blockIndex);
-      return false;
+    const ov = overlap([0, 0]);
+    if (ov) {
+      if ((ov[0] === 0 && ov[1] === 0) || overlap([-ov[0], -ov[1]])) {
+        blockAngle = (blockAngle + poses.length - diff) % poses.length;
+        putBlock(blockIndex);
+        return false;
+      } else {
+        blockAnchor[0] -= ov[0];
+        blockAnchor[1] -= ov[1];
+      }
     }
     putBlock(blockIndex);
     setBlockModel([blockModel]);
